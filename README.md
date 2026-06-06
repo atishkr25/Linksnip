@@ -1,4 +1,4 @@
-# URL Shortener
+# Linksnip : url shortener
 
 Node.js + Express + MongoDB + EJS based URL shortener with authentication, analytics dashboard, QR support, custom slugs, Redis caching, and rate limiting.
 
