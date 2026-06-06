@@ -1,5 +1,24 @@
 const { nanoid } = require('nanoid');
 const URL = require('../models/url');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || 'dummy');
+
+async function generateSmartAlias(url) {
+    if (!process.env.GEMINI_API_KEY) return null;
+    try {
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const prompt = `Generate a short, 1-3 word hyphenated URL slug based on the topic of this URL: ${url}. Return only the slug, nothing else, lowercase. Do not include any punctuation other than hyphens.`;
+        const result = await model.generateContent(prompt);
+        let slug = result.response.text().trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
+        if (slug.length > 30) slug = slug.substring(0, 30);
+        if (slug.length < 3) return null;
+        return slug;
+    } catch (e) {
+        console.error("Gemini AI Alias Generation failed:", e.message);
+        return null;
+    }
+}
 
 function getTopKeyFromMap(counterMap, fallback) {
     let topKey = fallback;
@@ -106,6 +125,16 @@ async function handleGenerateNewShortURL(req, res) {
         }
 
         shortID = customSlug;
+    } else if (body.generateSmartAlias === 'on' || body.generateSmartAlias === 'true') {
+        const aiSlug = await generateSmartAlias(body.url);
+        if (aiSlug) {
+            const existing = await URL.findOne({ shortId: aiSlug });
+            if (!existing) {
+                shortID = aiSlug;
+            } else {
+                shortID = `${aiSlug}-${nanoid(3)}`;
+            }
+        }
     }
 
     await URL.create({
@@ -115,7 +144,7 @@ async function handleGenerateNewShortURL(req, res) {
         createdBy: req.user.id,
     });
 
-    return res.redirect('/');
+    return res.redirect('/?id=' + shortID);
 }
 
 async function handleGetAnalytics(req, res) {
