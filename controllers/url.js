@@ -7,7 +7,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || 'dummy');
 async function generateSmartAlias(url) {
     if (!process.env.GEMINI_API_KEY) return null;
     try {
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
         const prompt = `Generate a short, 1-3 word hyphenated URL slug based on the topic of this URL: ${url}. Return only the slug, nothing else, lowercase. Do not include any punctuation other than hyphens.`;
         const result = await model.generateContent(prompt);
         let slug = result.response.text().trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
