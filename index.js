@@ -114,9 +114,13 @@ const authLimiter = rateLimit({
 
 app.use(cookieParser());
 
-connectToMongoDB('mongodb://127.0.0.1:27017/short-url')
-    .then(() => console.log('MongoDB connected'))
-    .catch((err) => console.log('MongoDB connection failed:', err.message));
+
+//mongodb connection
+    const mongoURI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/short-url';
+
+    connectToMongoDB(mongoURI)
+        .then(() => console.log('MongoDB connected'))
+        .catch((err) => console.log('MongoDB connection failed:', err.message));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -203,6 +207,8 @@ app.get('/:shortId', async (req, res) => {
 });
 
 app.listen(PORT, () => console.log(`Server started at port : ${PORT}`));
+
+
 
 process.on('uncaughtException', (err) => {
     if (err.code === 'EADDRINUSE') {
